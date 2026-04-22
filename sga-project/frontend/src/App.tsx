@@ -378,8 +378,7 @@ const ToastContainer = ({ toasts, removeToast }: { toasts: Toast[]; removeToast:
   );
 };
 
-// Coloque isso no início do seu componente App, junto com as outras constantes
-const API_URL = 'http://100.67.80.83:5000/api';
+const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
 
 const ToastItem = ({ toast, removeToast }: { toast: Toast; removeToast: (id: string) => void }) => {
   const bgColor = {
@@ -423,8 +422,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const { addToast } = useToast();
 
-// Tenta ler do .env, se não achar, usa o IP fixo da VM
-const API_URL = 'http://100.67.80.83:5000/api';
+const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -529,7 +527,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-sans text-gray-800">
-      <div className="bg-white p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-md mx-4 sm:mx-6 md:mx-auto transition-all duration-300 ease-in-out transform hover:scale-105">
+      <div className="bg-white p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-md mx-4 sm:mx-6 md:mx-auto">
         <div className="flex justify-center mb-6">
           <img
             src={logoSGA}
@@ -551,13 +549,12 @@ const LoginPage = () => {
             <input
               id="email"
               name="email"
-              type="email"
+              type="text"
               autoComplete="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="appearance-none block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-200 ease-in-out"
-              placeholder="seu.email@recife.pe.gov.br"
+              placeholder="admin@sga.local"
             />
           </div>
 
@@ -2394,8 +2391,8 @@ console.log('%c[App.tsx] Renderizando. O valor ATUAL de substitutionOldAssetId �
     onConfirmClick={setSelectedMovementForConfirmation}
     onRenewClick={setMovementToRenew}
     onSubstituteClick={handleOpenSubstitutionModal}
-    onReturnClick={(movement) => handleOpenReturnModal(movement.id)} // ✨ AJUSTE AQUI
-    onFinalizeSubstitution={(item) => setSubstitutionToFinalize(item)}
+    onReturnClick={(movement: any) => handleOpenReturnModal(movement.id)}
+    onFinalizeSubstitution={(item: any) => setSubstitutionToFinalize(item)}
     API_URL={API_URL}
     refreshKey={refreshKey}
   />
