@@ -6870,12 +6870,13 @@ const TabletDeliveryPage: React.FC<TabletDeliveryPageProps> = ({ API_URL, units,
                                 </label>
                                 <Select 
                                     options={filteredSchools.map(u => ({
-                                        value: u.id.toString(), 
-                                        // <<< AQUI ESTÁ A MUDANÇA VISUAL >>>
-                                        label: `${u.name} (${u.student_count} alunos)`, 
+                                        value: u.id.toString(),
+                                        label: u.livox_count > 0
+                                            ? `${u.name} (${u.student_count} alunos | ♿ ${u.livox_count} Livox)`
+                                            : `${u.name} (${u.student_count} alunos)`,
                                         status: u.last_batch_status,
                                         batchId: u.last_batch_id
-                                    }))} 
+                                    }))}
                                     onChange={(o: any) => {
                                         // ... (Mantenha a lógica de validação de status existente aqui) ...
                                         if (o?.status === 'Em Planejamento') {
@@ -6897,8 +6898,10 @@ const TabletDeliveryPage: React.FC<TabletDeliveryPageProps> = ({ API_URL, units,
                                     placeholder={filterRpa ? `Selecione uma escola da RPA ${filterRpa}...` : "Selecione (Maiores escolas primeiro)..."} 
                                     noOptionsMessage={() => "Nenhuma escola encontrada nesta região."}
                                     value={filteredSchools.map(u => ({
-                                        value: u.id.toString(), 
-                                        label: `${u.name} (${u.student_count} alunos)` // Garante que o valor selecionado mostre o count também
+                                        value: u.id.toString(),
+                                        label: u.livox_count > 0
+                                            ? `${u.name} (${u.student_count} alunos | ♿ ${u.livox_count} Livox)`
+                                            : `${u.name} (${u.student_count} alunos)`
                                     })).find(o => o.value === selectedSchoolId) || null}
                                 />
                             </div>

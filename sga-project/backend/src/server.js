@@ -6502,29 +6502,30 @@ app.put('/api/assets/:id/swap-sim', authenticateToken, authorizePermission('MENU
 app.get('/api/tablets/schools-with-students', authenticateToken, async (req, res) => {
   try {
     const query = `
-      SELECT 
-        u.id, 
+      SELECT
+        u.id,
         u.name,
         u.rpa,
-        COUNT(s.id) as student_count, -- <<< CONTAGEM DE ALUNOS
+        COUNT(s.id) as student_count,
+        COUNT(CASE WHEN s.requires_livox = TRUE THEN 1 END) as livox_count,
         (
-            SELECT status 
-            FROM delivery_batches db 
-            WHERE db.school_unit_id = u.id 
-            ORDER BY db.creation_date DESC 
+            SELECT status
+            FROM delivery_batches db
+            WHERE db.school_unit_id = u.id
+            ORDER BY db.creation_date DESC
             LIMIT 1
         ) as last_batch_status,
         (
-            SELECT id 
-            FROM delivery_batches db 
-            WHERE db.school_unit_id = u.id 
-            ORDER BY db.creation_date DESC 
+            SELECT id
+            FROM delivery_batches db
+            WHERE db.school_unit_id = u.id
+            ORDER BY db.creation_date DESC
             LIMIT 1
         ) as last_batch_id
       FROM units u
       JOIN tablet_eligible_students s ON s.school_unit_id = u.id
       GROUP BY u.id, u.name, u.rpa
-      ORDER BY student_count DESC, u.name ASC -- <<< ORDEM: MAIOR DEMANDA PRIMEIRO
+      ORDER BY student_count DESC, u.name ASC
     `;
     const result = await pool.query(query);
     res.json(result.rows);
