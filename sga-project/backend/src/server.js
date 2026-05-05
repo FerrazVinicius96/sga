@@ -4323,18 +4323,24 @@ app.post('/api/delivery-batches/:id/add-manual-student', authenticateToken, auth
         throw new Error('Este aluno já possui um tablet registrado/planejado em outro lote.');
     }
 
-    // 4. Buscar Próximo Tablet Disponível
+    // 4. Buscar Próximo Tablet Disponível respeitando necessidade de Livox do aluno PCD
     const assetRes = await client.query(`
-        SELECT a.id, a.patrimonio_number, a.box_number 
+        SELECT a.id, a.patrimonio_number, a.box_number
         FROM assets a
         JOIN item_types it ON a.item_type_id = it.id
         WHERE a.status = 'available'
         AND (it.name ILIKE 'Tablet' OR it.sku_code ILIKE 'TAB')
+        AND a.has_livox = $1
         ORDER BY a.box_number ASC NULLS LAST, a.patrimonio_number ASC
         LIMIT 1 FOR UPDATE SKIP LOCKED
-    `);
+    `, [requires_livox]);
 
-    if (assetRes.rows.length === 0) throw new Error('Sem tablets disponíveis no estoque.');
+    if (assetRes.rows.length === 0) {
+        const msg = requires_livox
+            ? 'Sem tablets COM LIVOX disponíveis no estoque para aluno PCD.'
+            : 'Sem tablets disponíveis no estoque.';
+        throw new Error(msg);
+    }
     const asset = assetRes.rows[0];
 
     // 5. Associar ao Lote
