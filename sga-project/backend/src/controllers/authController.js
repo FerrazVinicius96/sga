@@ -39,3 +39,43 @@ exports.login = async (req, res) => {
 		return res.status(statusCode).json({ message });
 	}
 };
+
+exports.logout = async (req, res) => {
+	try {
+		await authService.logout(req.user.id, req.ip);
+
+		return res.status(200).json({ message: 'Logout realizado com sucesso.' });
+	} catch (error) {
+		const statusCode = error.statusCode || 500;
+		const message =
+			error.statusCode ?
+				error.message
+			:	'Ocorreu um erro interno no servidor.';
+
+		if (!error.statusCode) {
+			console.error('Erro interno no Logout:', error);
+		}
+
+		return res.status(statusCode).json({ message });
+	}
+};
+
+exports.verifyToken = async (req, res) => {
+	try {
+		const { user } = await authService.verifyToken(req.user.id);
+
+		return res.status(200).json({ user });
+	} catch (error) {
+		const statusCode = error.statusCode || 500;
+		const message =
+			error.statusCode ?
+				error.message
+			:	'Ocorreu um erro interno no servidor.';
+
+		if (!error.statusCode) {
+			console.error('Erro interno no VerifyToken:', error);
+		}
+
+		return res.status(statusCode).json({ message });
+	}
+};

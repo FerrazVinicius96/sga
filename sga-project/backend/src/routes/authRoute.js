@@ -14,6 +14,12 @@ const {
 // --------------------------------------------------------
 router.post('/login', authController.login);
 
+// --------------------------------------------------------
+// 2. ROTAS PROTEGIDAS (Requerem token válido)
+// --------------------------------------------------------
+router.post('/logout', authenticateToken, authController.logout);
+router.get('/verify-token', authenticateToken, authController.verifyToken);
+
 // // --------------------------------------------------------
 // // 2. ROTA PROTEGIDA SIMPLES (Qualquer usuário logado)
 // // --------------------------------------------------------

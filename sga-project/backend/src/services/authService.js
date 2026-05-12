@@ -83,3 +83,28 @@ exports.login = async (email, password, ipAddress) => {
 		token,
 	};
 };
+
+exports.logout = async (userId, ipAddress) => {
+	await logAudit(userId, 'logout', 'user', userId, {}, ipAddress);
+};
+
+exports.verifyToken = async (userId) => {
+	const user = await userRepository.findById(userId);
+
+	if (!user) {
+		const error = new Error('Usuário não encontrado.');
+		error.statusCode = 401;
+		throw error;
+	}
+
+	if (!user.is_active) {
+		const error = new Error(
+			'Sua conta está desativada. Entre em contato com o administrador.',
+		);
+		error.statusCode = 403;
+		throw error;
+	}
+
+	const { password_hash, ...userWithoutPassword } = user;
+	return { user: userWithoutPassword };
+};
