@@ -2,6 +2,12 @@ const authService = require('../services/authService');
 
 exports.login = async (req, res) => {
 	try {
+		console.log('1. Content-Type recebido:', req.headers['content-type']);
+		console.log('2. Corpo da requisição (req.body):', req.body);
+
+		const { email, password } = req.body;
+		const ipAddress = req.ip;
+
 		// Repassa a execução para o Service
 		const { user, token } = await authService.login(
 			email,

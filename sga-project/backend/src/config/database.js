@@ -16,4 +16,13 @@ pool.on('error', (err) => {
 	console.log('Servidor conectado!');
 });
 
-module.exports = pool;
+module.exports = {
+	// Para consultas simples e rápidas (onde a transação não importa)
+	query: (text, params) => pool.query(text, params),
+
+	// Para obter um client exclusivo (Essencial para transações BEGIN/COMMIT)
+	getClient: () => pool.connect(),
+
+	// Opcional: para desligar o banco quando a API cair
+	end: () => pool.end(),
+};

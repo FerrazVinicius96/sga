@@ -7,9 +7,9 @@ const pool = require('./config/database'); // Importado apenas para validar a co
 
 const bootstrap = async () => {
 	try {
-		// (Opcional) Testa se o banco de dados está online antes de subir a API
-		// await pool.query('SELECT 1');
-		// console.log('📦 Banco de dados conectado com sucesso.');
+		const result = await pool.query('SELECT NOW();');
+		console.log('📦 Banco de dados conectado com sucesso.');
+		console.log('⏰ Hora atual no banco: ', result.rows[0].now);
 
 		// Inicia o servidor HTTP
 		startServer();
