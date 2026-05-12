@@ -715,8 +715,8 @@ const handleOpenSubstitutionModal = (movement: Movement) => {
   if (user?.role !== 'admin') return; // Apenas admin pode buscar usuários
   console.log('Fetching users...');
   try {
-    const response = await axios.get<User[]>(`${API_URL}/users`);
-    setUsers(response.data);
+    const response = await axios.get<{ users: User[] }>(`${API_URL}/users`);
+    setUsers(response.data.users);
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
     addToast('Erro ao carregar a lista de usuários.', 'error');
