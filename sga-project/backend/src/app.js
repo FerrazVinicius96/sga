@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const authRoute = require('./routes/authRoute');
+const usersRoute = require('./routes/usersRoute');
 
 const app = express();
 
@@ -20,5 +21,7 @@ app.get('/api/', (req, res) => {
 
 // Monta o módulo de rotas de autenticação
 app.use('/api/auth', authRoute);
+// Monta o módulo de rotas para usuários
+app.use('/api/users', usersRoute);
 
 module.exports = app;
