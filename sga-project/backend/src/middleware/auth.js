@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const { PERMISSIONS } = require('../constants/permissions');
 
+// CORREÇÃO 1: Importação do logAudit adicionada (ajuste o caminho conforme sua estrutura)
+const { logAudit } = require('../utils/logger');
+
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 exports.authenticateToken = (req, res, next) => {
@@ -27,9 +30,10 @@ exports.authenticateToken = (req, res, next) => {
 };
 
 exports.authorizeRole = (roles) => {
-	return (req, res, next) => {
+	// Adicionado 'async' para suportar o await no logAudit
+	return async (req, res, next) => {
 		if (!roles.includes(req.user.role)) {
-			logAudit(
+			await logAudit(
 				req.user.id,
 				'unauthorized_access',
 				'role_check',
@@ -51,12 +55,13 @@ exports.authorizeRole = (roles) => {
 };
 
 exports.authorizePermission = (permission) => {
-	return (req, res, next) => {
+	// Adicionado 'async' para suportar o await no logAudit
+	return async (req, res, next) => {
 		// ETAPA 1: VERIFICAÇÃO DE SEGURANÇA ADICIONADA
 		// Garante que o middleware de autenticação foi executado corretamente
 		// e que o objeto req.user e sua propriedade 'role' existem.
 		if (!req.user || typeof req.user.role === 'undefined') {
-			logAudit(
+			await logAudit(
 				null,
 				'authorization_error',
 				'permission_check',
@@ -79,13 +84,14 @@ exports.authorizePermission = (permission) => {
 			next(); // Permissão concedida
 		} else {
 			// Permissão negada
-			logAudit(
+			await logAudit(
 				req.user.id,
 				'unauthorized_access',
 				'permission_check',
 				null,
 				{
-					required_permission: permissionKey,
+					// CORREÇÃO 2: Alterado de 'permissionKey' para 'permission' (o parâmetro recebido)
+					required_permission: permission,
 					user_role: userRole,
 					path: req.path,
 				},

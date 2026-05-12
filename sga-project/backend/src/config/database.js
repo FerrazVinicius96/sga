@@ -9,7 +9,11 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-	console.error('Erro na conexão com o banco de dados: ', err);
+	if (err) {
+		console.error('Erro na conexão com o banco de dados: ', err);
+	}
+
+	console.log('Servidor conectado!');
 });
 
 module.exports = pool;
