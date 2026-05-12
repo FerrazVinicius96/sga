@@ -625,17 +625,17 @@ module.exports = startServer;
 // // });
 
 // Rota de Logout
-app.post('/api/auth/logout', authenticateToken, async (req, res) => {
-	await logAudit(
-		req.user.id,
-		'logout',
-		'user',
-		req.user.id,
-		{ email: req.user.email },
-		req.ip,
-	);
-	res.status(200).json({ message: 'Logout realizado com sucesso.' });
-});
+// app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+// 	await logAudit(
+// 		req.user.id,
+// 		'logout',
+// 		'user',
+// 		req.user.id,
+// 		{ email: req.user.email },
+// 		req.ip,
+// 	);
+// 	res.status(200).json({ message: 'Logout realizado com sucesso.' });
+// });
 
 // // Rota para verificar o token
 // app.get('/api/auth/verify-token', authenticateToken, (req, res) => {

@@ -16,7 +16,7 @@ import LegacyDisposalModal from './LegacyDisposalModal';
 
 interface RetirementAndDisposalPageProps {
   API_URL: string;
-  userRole?: 'admin' | 'manager' | 'basic' | 'advisor'; // Adicionado advisor
+  userRole?: 'admin' | 'manager' | 'basic' | 'advisor' | 'operator';
   userName?: string;
 }
 

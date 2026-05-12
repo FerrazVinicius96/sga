@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import InputMask from 'react-input-mask';
 import {
   Mail, Lock, LogIn, Menu, X, LayoutDashboard, HardDrive, BarChart2, Bell, Settings, LogOut,
@@ -37,6 +37,53 @@ import CdInventoryPage from './components/CdInventoryPage';
 import PendingTermsList from './components/PendingTermsList';
 import ExecutiveDashboard from './components/ExecutiveDashboard';
 
+// ── Camada modular: tipos, contextos, config, permissões ─────────────────────
+import { ToastProvider, useToast } from './contexts/ToastContext';
+import { AuthContext, AuthProvider } from './contexts/AuthContext';
+import { config } from './config/env';
+import { PERMISSIONS } from './constants/permissions';
+import type {
+  User,
+  UserRole,
+  AuthContextType,
+  Asset,
+  Movement,
+  Unit,
+  UnitData,
+  Person,
+  ItemType,
+  DashboardData,
+  AuditLog,
+  Peripheral,
+  BackendErrorResponse,
+  ToastType,
+} from './types';
+
+// Re-exports para backward compatibility — componentes que já importam de '../App'
+// podem continuar sem alteração imediata. Migrar gradualmente para os novos paths.
+export type { Asset, Movement, Unit, Person, Peripheral };
+export { useToast };
+
+// ── Fim dos imports modularizados ────────────────────────────────────────────
+
+/**
+ * Interceptor global de compatibilidade para chamadas axios diretas que ainda existem
+ * no DashboardPage e não foram migradas para o singleton api.ts.
+ *
+ * ATENÇÃO: Este bloco é temporário. À medida que as chamadas axios diretas forem
+ * substituídas pelos serviços em src/services/, este interceptor pode ser removido.
+ * O controle de autenticação definitivo está em src/services/api.ts.
+ */
+axios.interceptors.request.use(
+  (requestConfig) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      requestConfig.headers.Authorization = `Bearer ${token}`;
+    }
+    return requestConfig;
+  },
+  (error) => Promise.reject(error),
+);
 
 // --- LISTAS PADRÃO PARA COMBOS (DROPDOWNS) ---
 
@@ -135,381 +182,12 @@ const translateActionType = (type: string): string => {
   };
 
 
-// =====================================================================================
-// Definições de Tipos TypeScript (Interfaces)
-// =====================================================================================
+// Tipos migrados para src/types/ — importados no bloco de imports acima.
 
-// Interface para o objeto de usuário
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  full_name?: string;
-  role: 'admin' | 'manager' | 'basic';
-  must_change_password?: boolean;
-  is_active?: boolean;
-  job_title?: string;
-  registration_number?: string;
-  cpf?: string;
-  unit_id?: number;
-}
-
-// Interface para os dados da unidade, para ajudar com o TypeScript
-interface UnitData {
-    type: 'ADMINISTRATIVA' | 'ESCOLAR' | 'EXTERNA' | '';
-    name: string;
-    code?: string;
-    parent_id?: number | null;
-    status: string;
-    address?: string;
-    contact_phone?: string;
-    contact_email?: string;
-    notes?: string;
-}
-
-// Interface para o contexto de autenticação
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  logout: () => Promise<void>;
-  API_URL: string;
-}
-
-// Interface para os dados do Dashboard (ATUALIZADA)
-interface DashboardData {
-  totalAssets: number;
-  availableAssets: number;
-  inUseAssets: number;
-  loanedAssets: number;
-  maintenanceAssets: number;
-  retiredAssets: number;
-  disposedAssets: number;
-  pendingDeliveriesCount: number;   
-  pendingSubstitutionsCount: number;  
-  assetsByCategory: { name: string; value: number }[];
-  recentMovements: { id: number | string; asset: string; type: string; date: string; user: string }[];
-  pendingAlerts: { id: string; message: string; asset: string; dueDate: string }[];
-  expiringWarranties: { count: number; description: string; endDate: string; daysRemaining: number }[];
-}
-
-// Interface para Tipos de Itens
-interface ItemType {
-  id: number;
-  code: string;
-  name: string;
-  description?: string;
-  sku_code?: string;
-}
-
-// Interface para Unidades
-export interface Unit {
-  id: number;
-  type: 'ADMINISTRATIVA' | 'ESCOLAR' | 'EXTERNA';
-  name: string;
-  code?: string;
-  parent_id?: number | null;
-  status: string; 
-  address?: string;
-  contact_phone?: string;
-  contact_email?: string;
-  notes?: string;
-  current_assets_count?: number;
-}
-
-// Interface para Ativos (ATUALIZADA com campos para consulta)
-export interface Asset {
-  id: number;
-  sku: string;
-  item_type_id: number;
-  brand: string;
-  model: string;
-  description?: string;
-  serial_number?: string;
-  patrimonio_number?: string;
-  unit_of_measure?: string;
-  status: string;
-  current_unit_id?: number; // Renomeado
-  acquisition_date?: string;
-  warranty_end_date?: string;
-  notes?: string;
-  item_type_name: string;
-  current_unit_name?: string; // Renomeado
-}
-
-// Interface para Pessoas
-export interface Person {
-  id: number;
-  full_name: string;
-  unit_id?: number; // Renomeado
-  registration_number?: string;
-  cpf: string;
-  email: string;
-  contact_phone?: string;
-  unit_name?: string; // Adicionado para clareza (nome da unidade da pessoa)
-  current_assets_count?: number;
-  job_title?: string;
-}
-
-// Interface para Movimentações (ATUALIZADA com campos de pessoa e novos campos)
-export interface Movement {
-  id: number;
-  movement_id?: number;
-  asset_ids?: number[]; // AGORA É UM ARRAY DE IDS
-  assets?: Asset[]; // Para exibir os ativos associados à movimentação
-  movement_type: 'entry' | 'exit' | 'loan' | 'return' | 'maintenance';
-  movement_date: string; // ISO date string
-  responsible_user_id: number;
-  recipient_person_id?: number;
-  recipient_name?: string;
-  recipient_document?: string;
-  purpose?: string;
-  expected_return_date?: string; // ISO date string
-  actual_return_date?: string; // ISO date string
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  sku?: string; // Pode não existir se for multi-ativo
-  brand?: string; // Pode não existir se for multi-ativo
-  model?: string; // Pode não existir se for multi-ativo
-  responsible_username: string;
-  responsible_full_name?: string;
-  recipient_person_full_name?: string;
-  recipient_person_cpf?: string;
-  recipient_person_registration?: string;
-  destination_unit_id?: number; // Renomeado
-  destination_unit_name?: string; // Renomeado (do JOIN)
-  request_channel_type?: 'Email' | 'SEI' | 'Ordem Direta'; // NOVO
-  request_channel_details?: string; // NOVO
-  total_assets_moved?: number; // Para o totalizador
-  recipient_display_name?: string;
-  delivery_status?: 'pending_confirmation' | 'confirmed';
-  peripherals?: Peripheral[];
-}
-
-export interface Peripheral {
-  peripheral_type: string;
-  quantity: number;
-  status: 'out' | 'returned' | 'in';
-}
-
-// Interface para a estrutura de resposta de erro do backend
-interface BackendErrorResponse {
-  message?: string;
-  [key: string]: any;
-}
-
-// Interfaces para o sistema de Toast
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-
-interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-}
-
-interface ToastContextType {
-  addToast: (message: string, type?: ToastType) => void;
-}
-
-// Interface para o log de auditoria no topo do arquivo
-interface AuditLog {
-  id: number;
-  action_type: string;
-  target_entity: string;
-  details: any;
-  ip_address: string;
-  created_at: string;
-  user_name: string;
-  username: string;
-}
-
-// =====================================================================================
-// Contexto e Provedor de Toast
-// =====================================================================================
-
-const ToastContext = createContext<ToastContextType | null>(null);
-
-const ToastProvider = ({ children }: { children: ReactNode }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-  }, []);
-
-  useEffect(() => {
-    if (toasts.length > 0) {
-      const timer = setTimeout(() => {
-        removeToast(toasts[0].id);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [toasts, removeToast]);
-
-  return (
-    <ToastContext.Provider value={{ addToast }}>
-      {children}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </ToastContext.Provider>
-  );
-};
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
-
-const ToastContainer = ({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) => {
-  return (
-    <div className="fixed top-4 right-4 z-[2000] space-y-3">
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} removeToast={removeToast} />
-      ))}
-    </div>
-  );
-};
-
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
-
-const ToastItem = ({ toast, removeToast }: { toast: Toast; removeToast: (id: string) => void }) => {
-  const bgColor = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    info: 'bg-blue-500',
-    warning: 'bg-yellow-500',
-  }[toast.type];
-
-  const Icon = {
-    success: CheckCircle,
-    error: XCircle,
-    info: Info,
-    warning: AlertTriangleIcon,
-  }[toast.type];
-
-  return (
-    <div
-      className={`${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 transition-all duration-300 ease-out transform translate-x-0 opacity-100`}
-      role="alert"
-    >
-      {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
-      <span className="text-sm font-medium flex-grow">{toast.message}</span>
-      <button onClick={() => removeToast(toast.id)} className="ml-auto p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-150">
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
+// ToastContext migrado para src/contexts/ToastContext.tsx — importado acima.
 
 
-// =====================================================================================
-// Contexto e Provedor de Autenticação
-// =====================================================================================
-
-export const AuthContext = createContext<AuthContextType | null>(null);
-
-const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState<boolean>(true);
-  const { addToast } = useToast();
-
-const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api';
-
-  useEffect(() => {
-    const verifyToken = async () => {
-      if (token) {
-        try {
-          const response = await axios.get(`${API_URL}/auth/verify-token`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (response.data.isValid) {
-            setUser(response.data.user as User);
-          } else {
-            localStorage.removeItem('token');
-            setToken(null);
-            setUser(null);
-            addToast('Sua sessão expirou ou é inválida. Por favor, faça login novamente.', 'warning');
-          }
-        } catch (error: unknown) {
-          console.error('Erro ao verificar token:', error);
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
-          addToast('Erro ao verificar sessão. Por favor, faça login novamente.', 'error');
-        }
-      }
-      setLoading(false);
-    };
-    verifyToken();
-  }, [token, API_URL, addToast]);
-
-  const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-      const { token: newToken, user: userData } = response.data;
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setUser(userData as User);
-      addToast('Login bem-sucedido!', 'success');
-      return { success: true, message: 'Login bem-sucedido!' };
-    } catch (error: unknown) {
-      console.error('Erro no login:', error);
-      const axiosError = error as AxiosError<BackendErrorResponse>;
-      const errorMessage = (axiosError.response?.data?.message && typeof axiosError.response.data.message === 'string')
-        ? axiosError.response.data.message
-        : 'Erro ao fazer login.';
-      addToast(errorMessage, 'error');
-      return { success: false, message: errorMessage };
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      await axios.post(`${API_URL}/auth/logout`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      addToast('Logout realizado com sucesso.', 'info');
-    } catch (error: unknown) {
-      console.error('Erro ao registrar logout no backend:', error);
-      addToast('Erro ao fazer logout.', 'error');
-    } finally {
-      localStorage.removeItem('token');
-      setToken(null);
-      setUser(null);
-    }
-  };
-
-  useEffect(() => {
-    const requestInterceptor = axios.interceptors.request.use(config => {
-      const currentToken = localStorage.getItem('token');
-      if (currentToken) {
-        config.headers.Authorization = `Bearer ${currentToken}`;
-      }
-      return config;
-    }, error => {
-      return Promise.reject(error);
-    });
-
-    return () => {
-      axios.interceptors.request.eject(requestInterceptor);
-    };
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, API_URL }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+// AuthContext migrado para src/contexts/AuthContext.tsx — importado acima.
 
 // Componente da Página de Login
 const LoginPage = () => {
@@ -691,7 +369,8 @@ const DashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
   const [openMenu, setOpenMenu] = useState<string | null>('cadastros'); // Inicia com o menu 'cadastros' aberto
-  const { user, logout, API_URL, loading: authLoading } = useContext(AuthContext) as AuthContextType;
+  const { user, logout, loading: authLoading } = useContext(AuthContext) as AuthContextType;
+  const API_URL = config.apiUrl;
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -888,61 +567,15 @@ const handleOpenSubstitutionModal = (movement: Movement) => {
   };
 
   const { addToast } = useToast();
-    // 1. Definição dos Perfis
-    const ROLES = {
-      ADMIN: 'admin',
-      MANAGER: 'manager',
-      ADVISOR: 'advisor',
-      BASIC: 'basic',       // Técnico de Almoxarifado (Só Logística)
-      OPERATOR: 'operator'  // Técnico de Campo (Logística + Escolar) - NOVO
-    };
+  // ROLES e PERMISSIONS migrados para src/constants/permissions.ts
 
-    // 2. Matriz de Permissões
-    const PERMISSIONS = {
-      MENU_DASHBOARD: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
-      MENU_CADASTROS: [ROLES.ADMIN, ROLES.MANAGER], 
-
-      // Logística Geral: Basic e Operator acessam
-      MENU_LOGISTICA: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
-      
-      // Patrimônio: Gestão apenas
-      MENU_PATRIMONIO: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR], 
-
-      // --- A MUDANÇA ESTÁ AQUI ---
-      // Menu Escolar: REMOVEMOS O BASIC e adicionamos o OPERATOR
-      MENU_ESCOLAR: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.OPERATOR],
-
-      MENU_RELATORIOS: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR],
-      MENU_CONSULTAS: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
-      
-      MENU_AUDITORIA: [ROLES.ADMIN], 
-      MENU_CONFIGURACOES: [ROLES.ADMIN, ROLES.MANAGER], 
-
-      // Ações
-      // Ambos (Basic e Operator) podem registrar movimentações gerais
-      ACTION_REGISTER_MOVEMENT: [ROLES.ADMIN, ROLES.MANAGER, ROLES.BASIC, ROLES.OPERATOR],
-      
-      ACTION_CREATE_EDIT: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR],
-      ACTION_REQUEST_RETIREMENT: [ROLES.ADMIN, ROLES.MANAGER],
-      ACTION_FINAL_APPROVAL: [ROLES.ADMIN],
-      ACTION_APPROVE_REJECT: [ROLES.ADMIN],
-      ACTION_DELETE: [ROLES.ADMIN],
-
-      // Compatibilidade
-      SUBMENU_TIPOS_ITENS: [ROLES.ADMIN, ROLES.MANAGER],
-      SUBMENU_UNIDADES: [ROLES.ADMIN, ROLES.MANAGER],
-      SUBMENU_PESSOAS: [ROLES.ADMIN, ROLES.MANAGER],
-      SUBMENU_ATIVOS: [ROLES.ADMIN, ROLES.MANAGER],
-    };
-
-      // Função `can` atualizada para usar as novas chaves
-    const can = (permission: keyof typeof PERMISSIONS): boolean => {
-      const userRole = user?.role;
-      if (!userRole) return false;
-      const allowedRoles = PERMISSIONS[permission];
-      if (!allowedRoles) return false;
-      return allowedRoles.includes(userRole);
-    };
+  // Verifica se o usuário tem permissão para uma chave da matriz de permissões
+  const can = (permission: keyof typeof PERMISSIONS): boolean => {
+    const userRole = user?.role;
+    if (!userRole) return false;
+    const allowedRoles = PERMISSIONS[permission] as readonly string[];
+    return allowedRoles.includes(userRole);
+  };
 
     const translateStatus = (status: string): string => {
       const statusMap: { [key: string]: string } = {
@@ -1188,12 +821,8 @@ const fetchAuditLogs = useCallback(async () => {
     { name: 'Configurações', icon: Settings, id: 'settings', roles: PERMISSIONS.MENU_CONFIGURACOES },
   ];
 
-  const canAccess = (roles: string[]): boolean => {
-  // Se a lista de 'roles' não for definida ou estiver vazia, permite o acesso.
-  if (!roles || roles.length === 0) {
-    return true;
-  }
-  // Caso contrário, verifica se o cargo do usuário está na lista.
+  const canAccess = (roles: readonly string[]): boolean => {
+  if (!roles || roles.length === 0) return true;
   return roles.includes(user?.role || '');
 };
 
@@ -3044,7 +2673,7 @@ const MovementModal = ({ onClose, onSave, assets: allAssets, people, units, hand
   const [lastMovementId, setLastMovementId] = useState<number | null>(null);
   const [isAwaitingConfirmation, setIsAwaitingConfirmation] = useState<boolean>(false);
   
-  const { API_URL } = useContext(AuthContext) as AuthContextType;
+  const API_URL = config.apiUrl;
   const { addToast } = useToast();
 
   // --- LÓGICA DE EXIBIÇÃO CONDICIONAL ---
@@ -3793,7 +3422,7 @@ const UserModal = ({ onClose, onSave, userToEdit, units }: UserModalProps) => {
   const [username, setUsername] = useState(userToEdit?.username || '');
   const [email, setEmail] = useState(userToEdit?.email || '');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'manager' | 'basic'>(userToEdit?.role || 'basic');
+  const [role, setRole] = useState<UserRole>(userToEdit?.role ?? 'basic');
   const [isActive, setIsActive] = useState<boolean>(userToEdit?.is_active ?? true);
 
   // Dados Pessoais / Funcionais
@@ -4264,7 +3893,7 @@ const ReturnByAssetModal = ({ onClose, onSave, handleGenerateMovementReceipt }: 
   const [result, setResult] = useState<{ asset: Asset; person: Person } | null>(null);
   const [isReturned, setIsReturned] = useState(false);
   const [movementId, setMovementId] = useState<number | null>(null);
-  const { API_URL } = useContext(AuthContext) as AuthContextType;
+  const API_URL = config.apiUrl;
   const { addToast } = useToast();
 
   const handleSearch = async () => {
@@ -4411,7 +4040,7 @@ const ReturnByUserModal = ({ onClose, onSave, people, handleGenerateMovementRece
   const [selectedReturnAssetIds, setSelectedReturnAssetIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState<boolean>(false);
   const [lastMovementId, setLastMovementId] = useState<number | null>(null);
-  const { API_URL } = useContext(AuthContext) as AuthContextType;
+  const API_URL = config.apiUrl;
   const { addToast } = useToast();
 
   const fetchAssetsOfPerson = useCallback(async (personId: number) => {
@@ -4740,7 +4369,7 @@ const ProfileModal = ({ onClose, onSave, currentUser, onChangePasswordClick }: P
 // >>>  NOVO COMPONENTE DE PÁGINA - Tela de Troca Obrigatória de Senha <<<
 const ForcedChangePasswordPage = () => {
   // Pegamos as funções que precisamos do contexto
-  const { API_URL } = useContext(AuthContext) as AuthContextType;
+  const API_URL = config.apiUrl;
   const { addToast } = useToast();
 
   return (
