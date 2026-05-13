@@ -75,6 +75,43 @@ const PERMISSIONS = {
 	SUBMENU_UNIDADES: [ROLES.ADMIN, ROLES.MANAGER],
 	SUBMENU_PESSOAS: [ROLES.ADMIN, ROLES.MANAGER],
 	SUBMENU_ATIVOS: [ROLES.ADMIN, ROLES.MANAGER],
+
+	// ──────────────────────────────────────────────────────────────────────────
+	// Bifurcação de sistemas
+	// ──────────────────────────────────────────────────────────────────────────
+	// Mapeamento de papéis do sistema existente para os módulos:
+	//   admin    → gepro_admin  (acesso total)
+	//   manager  → gepro_gestor (aprovador de fases)
+	//   advisor  → gepro_ti     (instrução técnica — ETP/TR, Fase 2)
+	//   basic    → gepro_solicitante (cria demandas, Fase 1)
+	//   operator → gepro_recebimento (recebe equipamentos, Fase 4)
+	SISTEMA_SGA: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+	SISTEMA_GEPRO: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+
+	// ──────────────────────────────────────────────────────────────────────────
+	// GEPRO — permissões por ação
+	// ──────────────────────────────────────────────────────────────────────────
+
+	// Fase 1: qualquer usuário com acesso ao GEPRO pode criar demanda
+	GEPRO_CRIAR_DEMANDA: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+
+	// Fase 1: apenas gestor e admin aprovam/rejeitam
+	GEPRO_APROVAR_DEMANDA: [ROLES.ADMIN, ROLES.MANAGER],
+
+	// Fase 2: analista técnico (advisor) e admin preenchem ETP/TR
+	GEPRO_INSTRUCAO_TECNICA: [ROLES.ADMIN, ROLES.ADVISOR],
+
+	// Fase 2: gestor de compras (manager) e admin registram cotações
+	GEPRO_COTACOES: [ROLES.ADMIN, ROLES.MANAGER],
+
+	// Fase 3: jurídico (advisor) e admin emitem parecer
+	GEPRO_JURIDICO: [ROLES.ADMIN, ROLES.ADVISOR],
+
+	// Fase 4: recebimento (operator) e admin registram testes/atestado
+	GEPRO_RECEBIMENTO: [ROLES.ADMIN, ROLES.OPERATOR],
+
+	// Admin GEPRO: configurações e auditoria
+	GEPRO_ADMIN: [ROLES.ADMIN],
 };
 
 module.exports = {
