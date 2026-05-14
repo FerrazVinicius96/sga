@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../../config/database');
 
 exports.findByEmail = async (email) => {
 	const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);

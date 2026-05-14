@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
-const userRepository = require('../repositories/userRepository');
-const { logAudit } = require('../utils/logger');
-const { generateRandomPassword } = require('../utils/generatePassword');
+const userRepository = require('../../repositories/sga/userRepository');
+const { logAudit } = require('../../utils/logger');
+const { generateRandomPassword } = require('../../utils/generatePassword');
 
 exports.register = async (
 	username,

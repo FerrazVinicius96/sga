@@ -1,4 +1,4 @@
-const { PERMISSIONS } = require('../constants/permissions');
+const { PERMISSIONS } = require('../../constants/permissions');
 
 exports.getSistemas = (req, res) => {
 	const { role } = req.user;

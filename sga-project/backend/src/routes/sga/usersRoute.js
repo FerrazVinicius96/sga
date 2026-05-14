@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const usersController = require('../controllers/usersController');
-const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const usersController = require('../../controllers/sga/usersController');
+const { authenticateToken, authorizeRole } = require('../../middleware/auth');
 
 const adminOnly = [authenticateToken, authorizeRole(['admin', 'super_admin'])];
 

@@ -1,10 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const userRepository = require('../repositories/userRepository');
-const { logAudit } = require('../utils/logger');
+const userRepository = require('../../repositories/sga/userRepository');
+const { logAudit } = require('../../utils/logger');
 
 exports.login = async (email, password, ipAddress) => {
-	// 1. Validação de presença de dados
 	if (!email || !password) {
 		await logAudit(
 			null,
@@ -19,7 +18,6 @@ exports.login = async (email, password, ipAddress) => {
 		throw error;
 	}
 
-	// 2. Busca o usuário no banco de dados
 	const user = await userRepository.findByEmail(email);
 	if (!user) {
 		await logAudit(
@@ -35,7 +33,6 @@ exports.login = async (email, password, ipAddress) => {
 		throw error;
 	}
 
-	// 3. Verifica a senha com bcrypt
 	const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 	if (!isPasswordValid) {
 		await logAudit(
@@ -51,7 +48,6 @@ exports.login = async (email, password, ipAddress) => {
 		throw error;
 	}
 
-	// 4. Verifica se a conta está ativa
 	if (!user.is_active) {
 		await logAudit(
 			user.id,
@@ -68,14 +64,12 @@ exports.login = async (email, password, ipAddress) => {
 		throw error;
 	}
 
-	// 5. Gera o Token JWT
 	const token = jwt.sign(
 		{ id: user.id, role: user.role },
 		process.env.JWT_SECRET,
-		{ expiresIn: '1d' }, // Você pode mover esse '1d' para o .env futuramente
+		{ expiresIn: '1d' },
 	);
 
-	// 6. Segurança: Remove o hash da senha antes de retornar os dados
 	const { password_hash, ...userWithoutPassword } = user;
 
 	return {

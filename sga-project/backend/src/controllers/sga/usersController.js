@@ -1,12 +1,12 @@
-const usersService = require('../services/usersService');
-const { generateRandomPassword } = require('../utils/generatePassword');
+const usersService = require('../../services/sga/usersService');
+const { generateRandomPassword } = require('../../utils/generatePassword');
 const {
 	validateRequiredFields,
 	isValidEmail,
 	isValidRole,
 	isValidUsername,
 	isValidCPF,
-} = require('../utils/validators');
+} = require('../../utils/validators');
 
 exports.register = async (req, res) => {
 	const {
@@ -94,7 +94,7 @@ exports.getById = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-	const { email, role, cpf, username } = req.body;
+	const { email, role, cpf } = req.body;
 
 	if (email !== undefined && !isValidEmail(email))
 		return res.status(400).json({ message: 'Formato de e-mail inválido.' });

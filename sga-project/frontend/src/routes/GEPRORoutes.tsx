@@ -1,11 +1,11 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import GEPROLayout from '../components/gepro/GEPROLayout';
-import GEPRODashboard from '../components/gepro/GEPRODashboard';
-import DemandaDetail from '../components/gepro/DemandaDetail';
-import Fase2Page from '../components/gepro/Fase2Page';
-import Fase4Page from '../components/gepro/Fase4Page';
-import EmConstrucao from '../components/gepro/EmConstrucao';
+import GEPROLayout from '../views/gepro/GEPROLayout';
+import GEPRODashboard from '../views/gepro/GEPRODashboard';
+import DemandaDetail from '../views/gepro/DemandaDetail';
+import Fase2Page from '../views/gepro/Fase2Page';
+import Fase4Page from '../views/gepro/Fase4Page';
+import EmConstrucao from '../views/gepro/EmConstrucao';
 
 export default function GEPRORoutes() {
   return (
