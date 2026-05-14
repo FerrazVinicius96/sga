@@ -318,7 +318,7 @@ export default function DemandaDetail() {
                     </div>
                     <div style={{ flex: 1, paddingBottom: 4 }}>
                       <p style={{ margin: '0 0 2px', fontSize: 12, color: '#111827' }}>{a.observacao}</p>
-                      <p style={{ margin: 0, fontSize: 10, color: '#9ca3af' }}>{fmtDateTime(a.data_criacao)}</p>
+                      <p style={{ margin: 0, fontSize: 10, color: '#9ca3af' }}>{fmtDateTime(a.data_acompanhamento)}</p>
                     </div>
                   </div>
                 ))}
