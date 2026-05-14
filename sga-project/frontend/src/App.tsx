@@ -37,6 +37,10 @@ import CdInventoryPage from './components/CdInventoryPage';
 import PendingTermsList from './components/PendingTermsList';
 import ExecutiveDashboard from './components/ExecutiveDashboard';
 
+import { Routes, Route, Navigate } from 'react-router-dom';
+import GEPRORoutes from './routes/GEPRORoutes';
+import ModuleChooser from './components/ModuleChooser';
+
 // ── Camada modular: tipos, contextos, config, permissões ─────────────────────
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { AuthContext, AuthProvider } from './contexts/AuthContext';
@@ -4485,9 +4489,16 @@ const AppContent = () => {
     return <ForcedChangePasswordPage />;
   }
 
-  // Se o usuário está logado E não precisa trocar a senha, mostra o Dashboard
+  // Se o usuário está logado E não precisa trocar a senha, mostra chooser / SGA / GEPRO
   if (user) {
-    return <DashboardPage />;
+    return (
+      <Routes>
+        <Route path="/" element={<Navigate to="/chooser" replace />} />
+        <Route path="/chooser" element={<ModuleChooser />} />
+        <Route path="/gepro/*" element={<GEPRORoutes />} />
+        <Route path="/*" element={<DashboardPage />} />
+      </Routes>
+    );
   }
 
   // Se não há usuário, mostra a página de Login

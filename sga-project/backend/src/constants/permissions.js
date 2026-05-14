@@ -110,6 +110,15 @@ const PERMISSIONS = {
 	// Fase 4: recebimento (operator) e admin registram testes/atestado
 	GEPRO_RECEBIMENTO: [ROLES.ADMIN, ROLES.OPERATOR],
 
+	// Fase 4A: gerência (manager) agenda entrega após NE emitida
+	GEPRO_AGENDAMENTO: [ROLES.ADMIN, ROLES.MANAGER],
+
+	// Fase 3/GPOT: admin emite nota de empenho (ação invisível para gerência)
+	GEPRO_EMITIR_NE: [ROLES.ADMIN],
+
+	// Módulo Contratos (DANTAS): admin e manager gerenciam contratos e métricas
+	GEPRO_CONTRATOS: [ROLES.ADMIN, ROLES.MANAGER],
+
 	// Admin GEPRO: configurações e auditoria
 	GEPRO_ADMIN: [ROLES.ADMIN],
 };

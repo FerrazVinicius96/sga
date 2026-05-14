@@ -167,6 +167,51 @@ exports.findFilaAprovacoes = async () => {
 	return result.rows;
 };
 
+// ── Cotações ──────────────────────────────────────────────────
+
+exports.criarCotacao = async (client, demandaId, { fornecedor_id, descricao_produto_cotado, valor_unitario, valor_total, prazo_entrega_dias, validade_cotacao, observacoes }) => {
+	const { rows: seqRows } = await client.query(
+		`SELECT COALESCE(MAX(numero_sequencial), 0) + 1 AS proximo FROM gepro.cotacao WHERE demanda_id = $1`,
+		[demandaId],
+	);
+	const numero_sequencial = seqRows[0].proximo;
+
+	const result = await client.query(
+		`INSERT INTO gepro.cotacao
+			(demanda_id, numero_sequencial, fornecedor_id, descricao_produto_cotado,
+			 valor_unitario, valor_total, prazo_entrega_dias, validade_cotacao, observacoes)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+		[demandaId, numero_sequencial, fornecedor_id, descricao_produto_cotado || null,
+		 valor_unitario, valor_total || null, prazo_entrega_dias || null, validade_cotacao || null, observacoes || null],
+	);
+	return result.rows[0];
+};
+
+exports.findCotacoes = async (demandaId) => {
+	const result = await pool.query(
+		`SELECT c.*, f.nome AS fornecedor_nome, f.cnpj AS fornecedor_cnpj, f.email AS fornecedor_email
+		 FROM gepro.cotacao c
+		 LEFT JOIN gepro.fornecedor f ON f.id = c.fornecedor_id
+		 WHERE c.demanda_id = $1
+		 ORDER BY c.numero_sequencial`,
+		[demandaId],
+	);
+	return result.rows;
+};
+
+// RN006: Marca um fornecedor como vencedor (V015: apenas 1)
+exports.selecionarVencedor = async (client, demandaId, cotacaoId) => {
+	await client.query(
+		`UPDATE gepro.cotacao SET vencedor = FALSE WHERE demanda_id = $1`,
+		[demandaId],
+	);
+	const result = await client.query(
+		`UPDATE gepro.cotacao SET vencedor = TRUE WHERE id = $1 AND demanda_id = $2 RETURNING *`,
+		[cotacaoId, demandaId],
+	);
+	return result.rows[0] || null;
+};
+
 exports.findAcompanhamento = async (demandaId) => {
 	const result = await pool.query(
 		`SELECT

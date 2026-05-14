@@ -4,6 +4,10 @@ const authRoute = require('./routes/authRoute');
 const usersRoute = require('./routes/usersRoute');
 const bifurcacaoRoute = require('./routes/bifurcacaoRoute');
 const demandasRoute = require('./routes/gepro/demandasRoute');
+const templatesRoute = require('./routes/gepro/templatesRoute');
+const contratosRoute = require('./routes/gepro/contratosRoute');
+const fornecedoresRoute = require('./routes/gepro/fornecedoresRoute');
+const statsRoute = require('./routes/gepro/statsRoute');
 
 const app = express();
 
@@ -27,5 +31,9 @@ app.use('/api/bifurcacao', bifurcacaoRoute);
 
 // GEPRO
 app.use('/api/gepro/demandas', demandasRoute);
+app.use('/api/gepro/templates', templatesRoute);
+app.use('/api/gepro/contratos', contratosRoute);
+app.use('/api/gepro/fornecedores', fornecedoresRoute);
+app.use('/api/gepro/stats', statsRoute);
 
 module.exports = app;

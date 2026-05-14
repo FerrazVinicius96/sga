@@ -49,6 +49,35 @@ export const PERMISSIONS = {
   SUBMENU_UNIDADES: [ROLES.ADMIN, ROLES.MANAGER],
   SUBMENU_PESSOAS: [ROLES.ADMIN, ROLES.MANAGER],
   SUBMENU_ATIVOS: [ROLES.ADMIN, ROLES.MANAGER],
+
+  // ── Bifurcação de sistemas ────────────────────────────────────────────────
+  // Espelho de backend/src/constants/permissions.js — seção GEPRO
+  // Mapeamento: admin→gepro_admin, manager→gestor/compras, advisor→analista/jurídico,
+  //             basic→solicitante, operator→recebimento
+  SISTEMA_SGA:   [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+  SISTEMA_GEPRO: [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+
+  // ── GEPRO — permissões por ação ───────────────────────────────────────────
+  // Fase 1: qualquer usuário com acesso ao GEPRO pode criar demanda
+  GEPRO_CRIAR_DEMANDA:    [ROLES.ADMIN, ROLES.MANAGER, ROLES.ADVISOR, ROLES.BASIC, ROLES.OPERATOR],
+  // Fase 1: apenas gestor e admin aprovam/rejeitam
+  GEPRO_APROVAR_DEMANDA:  [ROLES.ADMIN, ROLES.MANAGER],
+  // Fase 2: analista técnico (advisor) e admin preenchem ETP/TR
+  GEPRO_INSTRUCAO_TECNICA:[ROLES.ADMIN, ROLES.ADVISOR],
+  // Fase 2: gestor de compras (manager) e admin registram cotações
+  GEPRO_COTACOES:         [ROLES.ADMIN, ROLES.MANAGER],
+  // Fase 3: jurídico (advisor) e admin emitem parecer
+  GEPRO_JURIDICO:         [ROLES.ADMIN, ROLES.ADVISOR],
+  // Fase 4: recebimento (operator) e admin registram testes/atestado
+  GEPRO_RECEBIMENTO:      [ROLES.ADMIN, ROLES.OPERATOR],
+  // Fase 4A: gerência (manager) agenda entrega após NE emitida
+  GEPRO_AGENDAMENTO:      [ROLES.ADMIN, ROLES.MANAGER],
+  // Fase 3/GPOT: apenas admin emite nota de empenho (invisível para gerência)
+  GEPRO_EMITIR_NE:        [ROLES.ADMIN],
+  // Módulo Contratos (DANTAS)
+  GEPRO_CONTRATOS:        [ROLES.ADMIN, ROLES.MANAGER],
+  // Configurações e templates GEPRO
+  GEPRO_ADMIN:            [ROLES.ADMIN],
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

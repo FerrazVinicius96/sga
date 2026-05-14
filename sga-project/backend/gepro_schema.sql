@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS gepro.demanda (
     aquisicao_emergencial           BOOLEAN DEFAULT FALSE,
     justificativa_emergencial       TEXT,
     valor_estimado                  DECIMAL(15,2),
-    modalidade_licitatoria          VARCHAR(20)
-        CHECK (modalidade_licitatoria IN ('pregao', 'concorrencia', 'srp', 'convite')),
+    modalidade_licitatoria          VARCHAR(30)
+        CHECK (modalidade_licitatoria IN ('pregao', 'concorrencia', 'srp', 'convite', 'ata_registro_precos')),
     numero_processo_sei             VARCHAR(100),
     data_criacao                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
